@@ -128,8 +128,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="adminExe.cpp" />
     <ClCompile Include="execute.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="staffExe.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

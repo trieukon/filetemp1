@@ -6,9 +6,12 @@
 using namespace std;
 using json = nlohmann::json;
 bool checkFile(string path);
-void login();
+string login();
+void creFileAcc();
+void gotoPermision(string x);
 int main() {	
-	login();
+	creFileAcc();
+	gotoPermision(login());
 	system("pause");
 	return 0;
 }
