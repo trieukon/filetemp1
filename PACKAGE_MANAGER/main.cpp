@@ -2,15 +2,17 @@
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include <string>
+#include <ctime>
 //#include"execute.hpp"
 using namespace std;
 using json = nlohmann::json;
 bool checkFile(string path);
 string login();
-void creFileAcc();
+void creFileJSON();
 void gotoPermision(string x);
 int main() {	
-	creFileAcc();
+	srand(time(NULL));
+	creFileJSON();
 	gotoPermision(login());
 	system("pause");
 	return 0;
