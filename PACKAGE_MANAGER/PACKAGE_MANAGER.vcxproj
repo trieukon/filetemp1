@@ -131,6 +131,9 @@
     <ClCompile Include="adminExe.cpp" />
     <ClCompile Include="execute.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Source.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="staffExe.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

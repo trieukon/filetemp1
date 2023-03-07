@@ -3,21 +3,30 @@
 #include "nlohmann/json.hpp"
 #include <string>
 #include <ctime>
-
+#include <algorithm>
 using namespace std;
 using json = nlohmann::json;
 
-struct newPkg
-{
-	char type;
-	string code,name,id;
-	long long price;
-	int q;
-} ;
+//struct newPkg
+//{
+//	char type;
+//	string code,name,id;
+//	long long price;
+//	int q;
+//} ;
+string toCurr(long long a) {	//ham tra ve string in tien, vd a=1200 (long long) thi return = 1.200.000 (string)
+	string s = to_string(a);
+	int n = s.length() - 1, d = 2;
+	while (d < n && n >= 3) {
+		n = s.length() - 1;
+		s.insert((n - d), ".");
+		d += 4;
+	}
+	return s + ".000";
+}
 
 
-
-string now() {
+string now() {	//Lay thoi gian may tra ve string
 	time_t now = time(nullptr);
 	char buffer[20];
 	tm local_time;
@@ -30,22 +39,23 @@ string now() {
 	return string(buffer);
 }
 
-void gotoAdmin();
-void gotoStaff(string name);
+void gotoAdmin();	//o file adminExe.cpp
+void gotoStaff(string name);//o file staffExe.cpp
 
-void exportJSON(json data) {
+
+void exportJSON(json data) {	//nhap JSON de xuat ra data.json
 	ofstream a("data.json");
 	a << data;
 	a.close();
 }
 
-bool checkFile(string path) {
+bool checkFile(string path) {	//kiem tra su ton tai cua file data.json
 	ifstream f(path);
 	bool a = f.good();
 	f.close();
 	return a;
 }
-void creFileJSON() {
+void creFileJSON() {	// khoi tao ban dau file data.json
 	if (!checkFile("data.json")) {
 		json a = {
 			{"account",{
@@ -69,10 +79,10 @@ void creFileJSON() {
 				}
 			},
 			{"model",{
-				{"PC",{
+				{"L",{
 					{"n",0},{"goods",{}}
 			}},
-				{"PHONE",{
+				{"P",{
 					{"n",0},{"goods",{}}
 			}}
 		}},
@@ -88,7 +98,7 @@ void creFileJSON() {
 	}
 }
 
-json importJSON() {
+json importJSON() {	//tra ve json tu du lieu data.json
 	fstream a("data.json");
 	json data;
 	a >> data;	
@@ -98,12 +108,12 @@ json importJSON() {
 
 
 
-string login() {
+string login() {	//dang nhap
 	
 	json data = importJSON();
 	string urn, pw;
 	cout << "======= Shoppi!!! =======" << endl;
-	cout << "Moi ban dang nhap: " << endl;
+	cout << "Moi ban dang nhap! " << endl;
 	cout << "Ten dang nhap:\t";
 	cin >> urn;
 	cout << "Mat khau:\t";
@@ -125,7 +135,7 @@ string login() {
 	}
 
 }
-string creIdOrder(json a) {
+string creIdOrder(json a) {	// tao id don hang (co kiem tra long nhau)
 	int n;
 	bool k=1;
 	string abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", s = ""; //36 KY TU
@@ -137,7 +147,7 @@ string creIdOrder(json a) {
 		n = a["packages"]["nAll"]; 
 		if (n > 0) {
 			do {
-				if (s == a["packages"]["pkgs"]["id"][n]) {
+				if (s == a["packages"]["pkgs"][n-1]["id"]) {
 				n = a["packages"]["nAll"];
 				k = 0;
 				break;
@@ -146,7 +156,7 @@ string creIdOrder(json a) {
 	} while (k!=true);
 	return s;	
 }
-void gotoPermision(string x) {
+void gotoPermision(string x) {//re nhanh quyen tu login()
 	if (x == "") {
 		gotoAdmin();
 	}
@@ -155,109 +165,75 @@ void gotoPermision(string x) {
 	}
 }
 //==============================================================
-void newPkgs(json* pkg) {
-	string id = creIdOrder(*pkg);
-	json inp = *pkg;
-	json outp = { {"id",id},{"items",{}} };
-	newPkg f;
-	
 
-	int n = 0;
-newStep:
-	n++;
-	string s = "NHAP DON HANG MOI!\n---------------------------\n";//47
-	s += "Ma dinh danh don hang: " + id + "\n";
-step1:
-	system("cls");	
-	cout << s ;		
-	cout << "Loai may ('L': May tinh, 'P': Dien thoai) :";
-	cin >> f.type;
-	if (f.type != 'l' && f.type != 'L' && f.type != 'P' && f.type != 'p')
-	{
-		goto step1;
-		
-	}
-	else {
-		if (f.type == 'l' || f.type == 'L') {
-			s += "Loai may: L - Laptop,\n";
-		}else s += "Loai may: P - Dien thoai,\n";
-		
-	}
-	s += "Ten may: ";
-	system("cls");
-	cout << s;
-	cin.ignore(99999, '\n');cin.clear();
-	getline(cin, f.name);
-	s += f.name +",\n";
-	system("cls");
-	cout << s<<"Ma dong may (viet lien khong dau): ";
-	getline(cin, f.code);
-	s += "Ma dong may: " + f.code + ",\n";
-	system("cls");
-step2:
-	cout << s << "Nhap so luong nhap vao: ";
-	cin >> f.q;
+//
+void findIdPkgs(json*pkg) {	//muc 2 cua quan ly don hang
+	/*json inp = *pkg; inp = inp["packages"];
 	
-	if (f.q < 1) {
-		system("cls");
-		cout << "So luong khong hop le!"<<endl;
-		cin.clear();
-		cin.ignore(99999, '\n'); 
-		goto step2;
+	if (inp["nAll"] < 1) {
+		cout << "Khong co don hang nao trong csdl!" << endl;
+		system("pause");
 	}
 	else {
-		s += "So luong: " + to_string(f.q) + " (chiec),\n";
-	}
-	system("cls");
-step3:
-	cout << s<<"Nhap don gia (nghin vnd):";
-	cin >> f.price;
-	if (f.price < 1) {
-		system("cls");
-		cout << "Menh gia khong hop le!" << endl;
-		cin.clear();
-		cin.ignore(99999, '\n');
-		goto step3;
-	}
-	else {
-		s += "Don gia: " + to_string(f.price) + "000d /chiec. \n";
-	}
-	s.erase(s.begin(), s.begin() + 47);
-	system("cls");
-	
-confirm:
-	cout << "XAC NHAN DON HANG!\n---------------------------\n";
-	cout << s<<endl;
-	cout << "1. Tiep tuc hang moi| 2. Ket thuc nhap | 3. Huy nhap"<<endl;
-	char a;
-	cin >> a;
-	if (a == '1' || a == '2') {
-		outp["items"].push_back(
-			{	{"type",f.type},
-				{"name",f.name},
-				{"idModel",f.code},
-				{"quantity",f.q},
-				{"price",f.price}
+		cout << "NHAP MA DINH DANH CUA DON HANG DE TRUY XUAT" << endl;
+		cout << string(20,'-') << endl << "/>";
+		string inS;
+		cin >> inS;
+		int n = inp["nAll"];
+		while(n--) {
+			cout << n << endl;
+			if (inp["pkgs"][n]["id"] == inS) {
+				cout << inp["pkgs"][n]["name"];
+				system("pause");
+				break;				
 			}
-		);
-		outp.push_back({ "n",n });
-		if (a == '1') {
-			goto newStep;
-		}else{
-			outp.push_back({ "time",now() });
-			inp["packages"]["nAll"] = inp["packages"]["nAll"] + 1;
-			inp["packages"]["nHaving"] = inp["packages"]["nHaving"] + 1;
-			inp["packages"]["pkgs"].push_back(outp);
-			*pkg = inp;
-			exportJSON(*pkg);
-			cout << "Da luu thanh cong!" << endl;
 		}
+		cout << "NO";
+		system("pause");
+	}*/
+	
+}
+
+long checkSameOrderd(json t, string id,int n) { //tra ve vi tri ma idModel dung trong mang json neu no ton tai truoc do, k co tra ve -1
+	if (n>0) for (int i = 0; i < n; i++) {
+		if ((string)t[i]["idModel"] == id) return i;
 	}
-	else if (a == '3') {
-		cout << "Da huy nhap!" << endl;
+	return -1;
+}
+
+void displayOrderd(json items,json t, int n) { //lenh in man hinh don hang da nhap 
+	if (n > 0) 
+	{
+		int* p=new int[n];
+		long long sum = 0;
+		cout << string(30, '-') << endl<<"DON HANG BAO GOM: "<<endl;
+		for (int i = 0; i < n; i++) {
+			cout << i+1<<". " << items[i]["idModel"] << " - ";
+			
+			if (t["model"]["L"]["n"]>0) for (int j = 0; j < t["model"]["L"]["n"]; j++) {
+				if (items[i]["idModel"] == t["model"]["L"]["goods"][j]["id"]) {
+					cout << t["model"]["L"]["goods"][j]["name"] << " : ";
+					p[i] = t["model"]["L"]["goods"][j]["price"];
+				}
+			}
+			if (t["model"]["P"]["n"] > 0) for (int j = 0; j < t["model"]["P"]["n"]; j++) {
+				if (items[i]["idModel"] == t["model"]["P"]["goods"][j]["id"]) {
+					cout << t["model"]["P"]["goods"][j]["name"] << " : ";
+					p[i] = t["model"]["P"]["goods"][j]["price"];
+				}
+			}
+
+			cout << items[i]["quantity"] << "*" << toCurr(p[i]) << " = " << toCurr((int)items[i]["quantity"] * p[i]) << " vnd" << endl;
+			sum += (int)items[i]["quantity"] * p[i];
+
+		}
+		cout << "Tong gia tri: " << toCurr(sum) << " vnd." << endl;
+		cout << string(30, '-') << endl;
+		delete[]p;
+		p = nullptr;
 	}
-	else {
-		goto confirm;
-	}
-	system("pause");
-};
+}
+string toUP(string inp) { //tra ve string la UPCASE cua string vao
+	transform(inp.begin(), inp.end(), inp.begin(), ::toupper);
+	return inp;
+}

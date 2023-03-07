@@ -1,3 +1,5 @@
 ﻿  execute.cpp
-D:\Project C++\PACKAGE_MANAGER\PACKAGE_MANAGER\execute.cpp(127): warning C4715: 'login': not all control paths return a value
+D:\Project C++\PACKAGE_MANAGER\PACKAGE_MANAGER\execute.cpp(19,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\Project C++\PACKAGE_MANAGER\PACKAGE_MANAGER\execute.cpp(21,21): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Project C++\PACKAGE_MANAGER\PACKAGE_MANAGER\execute.cpp(137): warning C4715: 'login': not all control paths return a value
   PACKAGE_MANAGER.vcxproj -> D:\Project C++\PACKAGE_MANAGER\x64\Debug\PACKAGE_MANAGER.exe
