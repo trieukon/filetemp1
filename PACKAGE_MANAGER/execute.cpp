@@ -165,7 +165,13 @@ void gotoPermision(string x) {//re nhanh quyen tu login()
 	}
 }
 //==============================================================
-
+void updateQuantity(json* t,char type, int vt, int q) {
+	json tt = *t;
+	if (type == 'L') {
+		tt["model"]["L"]["goods"][vt]["quantity"] = tt["model"]["L"]["goods"][vt]["quantity"] + q;
+	}else tt["model"]["P"]["goods"][vt]["quantity"] = tt["model"]["P"]["goods"][vt]["quantity"] + q;
+	*t = tt;
+}
 //
 void findIdPkgs(json*pkg) {	//muc 2 cua quan ly don hang
 	/*json inp = *pkg; inp = inp["packages"];

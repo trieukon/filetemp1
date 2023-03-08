@@ -22,6 +22,7 @@ json importJSON();
 void exportJSON(json data);
 string creIdOrder(json pkg);
 string now();
+void updateQuantity(json* t, char type, int vt, int q);
 //ham chua viet
 void outAllPkgs() { cout << "heloo"; };
 void outModels() { cout << "heloo"; };
@@ -270,12 +271,13 @@ bool checkSameModel(json* t, char type,string name) {	//kiem tra xem co trung mo
 	}return 1;
 }
 
-string getNameModel(string idModel, char type,json *t,long long* p) {	//lay ten tu idModel da cho
+string getNameModel(string idModel, char type,json *t,long long* p,int *vt) {	//lay ten tu idModel da cho
 	json temp = *t;
 	if (type == 'L') {
 		for (int i = 0; i < temp["model"]["L"]["n"]; i++) {
 			if ((string)temp["model"]["L"]["goods"][i]["id"] == idModel) {
 				*p = temp["model"]["L"]["goods"][i]["price"];
+				*vt = i;
 				return (string)temp["model"]["L"]["goods"][i]["name"];
 				break;
 			}
@@ -298,6 +300,7 @@ string getNameModel(string idModel, char type,json *t,long long* p) {	//lay ten 
 void existModelPkg(json* t, json* items, int* n) {	//NHAP HANG VOI CAC DON CO SAN
 	json temp = *items;
 	newPkg f;
+	int vt=0;
 reType:
 	string display = "DON HANG CO MAU DA CO:\n" + string(30, '-') + "\n"; //Luu display lai
 step1:
@@ -345,7 +348,7 @@ step2:
 	getline(cin, f.idModel);
 	cin.clear();
 	f.idModel=toUP(f.idModel);
-	f.name = getNameModel(f.idModel, f.type, t,&f.price);
+	f.name = getNameModel(f.idModel, f.type, t,&f.price,&vt);
 	if ( f.name=="") {
 		system("cls");
 		cout << "Khong ton tai IdModel nay!" << endl;
@@ -360,9 +363,13 @@ step2:
 step5:
 	system("cls");
 	cout << display;
+	int kk = checkSameOrderd(temp, f.idModel, *n);
+	if (kk >= 0) {
+		cout << "Hien don nay da nhap: " << temp[kk]["quantity"] << " (chiec),"<<endl;
+	}
 	cout << "So luong nhap vao:";
 	cin >> f.q;
-	int kk=checkSameOrderd(temp, f.idModel, *n);
+	
 	if (kk == -1) {	// cho phep nhap am de tru don hang dang nhap
 		kk = 0;
 	}else kk = temp[kk]["quantity"];
@@ -391,6 +398,7 @@ step6:
 				{"idModel",f.idModel},{"quantity",f.q} });
 			*n = *n + 1;
 		}
+		updateQuantity(t,f.type, vt, f.q);
 		*items = temp;
 		break;
 	}
@@ -482,12 +490,12 @@ step6:
 		if (f.type == 'L') {
 			json tt=*t;
 			tt["model"]["L"]["n"] = tt["model"]["L"]["n"] + 1;
-			tt["model"]["L"]["goods"].push_back({ { "name",f.name }, { "id",f.idModel }, { "price",f.price } });
+			tt["model"]["L"]["goods"].push_back({ { "name",f.name }, { "id",f.idModel }, { "price",f.price },{"quantity",f.q}});
 			*t = tt;
 		}else {
 			json tt = *t;
 			tt["model"]["P"]["n"] = tt["model"]["P"]["n"] + 1;
-			tt["model"]["P"]["goods"].push_back({{"name",f.name}, {"id",f.idModel}, {"price",f.price}});
+			tt["model"]["P"]["goods"].push_back({{"name",f.name}, {"id",f.idModel}, {"price",f.price},{"quantity",f.q} });
 			*t = tt;
 		}
 		break;
