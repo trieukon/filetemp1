@@ -14,6 +14,8 @@ struct newPkg
 	int q;
 };
 //ham o cac file cpp khac
+
+bool checkHavingModel(json t, char type);
 long checkSameOrderd(json t, string id,int n);
 string toCurr(long long a);
 string toUP(string inp);
@@ -23,9 +25,12 @@ void exportJSON(json data);
 string creIdOrder(json pkg);
 string now();
 void updateQuantity(json* t, char type, int vt, int q);
+void printModelQ(json t, char type);
+string getNameModel(string idModel, char type, json* t, long long* p, int* vt);
 //ham chua viet
-void outAllPkgs() { cout << "heloo"; };
-void outModels() { cout << "heloo"; };
+void outPkgs(json * pkg);
+
+void displayModels() { cout << "heloo"; };
 void findIdPkgs(json* pkg);
 
 void delAccout() {	//Muc xoa acc
@@ -203,30 +208,7 @@ void editAccout() {	//Muc sua  tai khoan (xoa, doi pass, tao moi)
 }
 //====================== QUAN LY DON HANG =================================
 
-void printModelQ(json t, char type) {	//in cac mau may da tung nhap
-	cout << string(30, '-') << endl;;
-	if (type == 'L') {
-		for (int i = 0; i < t["model"]["L"]["n"]; i++) {
-			cout << t["model"]["L"]["goods"][i]["id"] << " - " << t["model"]["L"]["goods"][i]["name"] << endl;
-		}
-	}
-	else {
-		for (int i = 0; i < t["model"]["P"]["n"]; i++) {
-			cout << t["model"]["P"]["goods"][i]["id"] << " - " << t["model"]["P"]["goods"][i]["name"] << endl;
-		}
-	}
-	cout << string(30, '-') << endl;;
-}
 
-bool checkHavingModel(json t, char type) { //Kiem tra su ton tai cua Model da ton tai chua
-	if (type == 'L' && (t["model"]["L"]["n"] > 0)) {
-		return 1;
-	}
-	else if (type == 'P' && (t["model"]["P"]["n"] > 0)) {
-		return 1;
-	}
-	else return 0;
-}
 
 string creIdModel(json a) {	//tao id cho Model thiet bi
 	int n;
@@ -271,32 +253,92 @@ bool checkSameModel(json* t, char type,string name) {	//kiem tra xem co trung mo
 	}return 1;
 }
 
-string getNameModel(string idModel, char type,json *t,long long* p,int *vt) {	//lay ten tu idModel da cho
-	json temp = *t;
-	if (type == 'L') {
-		for (int i = 0; i < temp["model"]["L"]["n"]; i++) {
-			if ((string)temp["model"]["L"]["goods"][i]["id"] == idModel) {
-				*p = temp["model"]["L"]["goods"][i]["price"];
-				*vt = i;
-				return (string)temp["model"]["L"]["goods"][i]["name"];
-				break;
-			}
-		}
 
+
+
+void newModels(json* pkg) {
+	json t = *pkg;
+	newPkg f;
+reType:
+	string display = "NHAP MAU MAY MOI:\n" + string(30, '-') + "\n"; //Luu display lai
+step1:
+	//Buoc 1: nhap loai may
+	system("cls");
+	cout << display;
+	cout << "Moi nhap : \n('L':Laptop || 'P': Dien thoai)" << endl << "/>";
+	cin >> f.type;
+	while (f.type != 'l' && f.type != 'L' && f.type != 'P' && f.type != 'p') goto step1;//Kiem tra nhap
+
+	if (f.type == 'l' || f.type == 'L') {
+		f.type = 'L';
+		display += "Loai may: L - Laptop\n";
 	}
 	else {
-		for (int i = 0; i < temp["model"]["P"]["n"]; i++) {
-			if ((string)temp["model"]["P"]["goods"][i]["id"] == idModel) {
-				*p = temp["model"]["P"]["goods"][i]["price"];
-				return (string)temp["model"]["P"]["goods"][i]["name"];
-				break;
-			}
+		f.type = 'P';
+		display += "Loai may: P - Dien thoai\n";
+	};
+	cin.ignore();
+step2://Nhap ten mau may
+	system("cls");
+	cout << display;
+	printModelQ(t, f.type);
+	cout << "Nhap ten mau may: ";	
+	getline(cin, f.name);	
+	f.name=toUP(f.name);
+	cin.clear();
+	if (checkSameModel(&t, f.type, f.name) == 0) goto step2;
+	//Buoc 3: Tao IdModel cho mau may vua nhap
+	f.idModel = creIdModel(t);
+	display += "IdModel: \'" + f.idModel + "\' : "+f.name+"\n";
+	//Buoc 4: Nhap don gia
+step4:
+	system("cls");
+	cout << display;
+	cout << "Nhap don gia (don vi 'nghin vnd'): ";
+	cin >> f.price;
+	if (f.price < 1) {
+		cin.ignore(999, '\n'); cin.clear();
+		goto step4;
+	};
+	display += "Don gia: " + toCurr(f.price) + " vnd / chiec,\n" + string(20,'-') +"\n";
+	//Buoc 6: Xac nhan
+step6:
+	system("cls");
+	cout << "XAC NHAN LAI: \n" << string(20, '-') << endl;
+	cout << display;
+	cout << "1. Hoan tat nhap | 2. Nhap lai | 3. Huy va tro lai\n/>";
+	char a;
+	cin >> a;
+	switch (a)
+	{
+	case '1': {
+		if (f.type == 'L') {
+			t["model"]["L"]["n"] = t["model"]["L"]["n"] + 1;
+			t["model"]["L"]["goods"].push_back({ { "name",f.name }, { "id",f.idModel }, { "price",f.price },{"quantity",0} });
+			*pkg=t;
 		}
-
-
+		else {			
+			t["model"]["P"]["n"] = t["model"]["P"]["n"] + 1;
+			t["model"]["P"]["goods"].push_back({ {"name",f.name}, {"id",f.idModel}, {"price",f.price},{"quantity",0} });
+			*pkg = t;
+		}
+		exportJSON(t);
+		break;
 	}
-	return "";
+	case '2': {
+		goto reType;
+		break;
+	}
+	case '3': {
+		break;
+	}
+	default:
+		goto step6;
+		break;
+	}
+	system("pause");
 }
+
 void existModelPkg(json* t, json* items, int* n) {	//NHAP HANG VOI CAC DON CO SAN
 	json temp = *items;
 	newPkg f;
@@ -337,7 +379,7 @@ step1:
 		
 	};
 
-	//Buoc 2: Nhap ten mau may
+	//Buoc 2: Nhap id mau may
 	system("cls");
 	cin.ignore();
 step2:
@@ -361,19 +403,19 @@ step2:
 	display += "Don gia: " + toCurr(f.price) + " vnd / chiec,\n" + string(20, '-') + "\n";
 	//Buoc 5: Nhap so luong
 step5:
+	int nHave = 0;
 	system("cls");
 	cout << display;
 	int kk = checkSameOrderd(temp, f.idModel, *n);
 	if (kk >= 0) {
-		cout << "Hien don nay da nhap: " << temp[kk]["quantity"] << " (chiec),"<<endl;
-	}
+		nHave = temp[kk]["quantity"];
+		cout << "Hien don nay da nhap: " << nHave << " (chiec),"<<endl;
+		}
 	cout << "So luong nhap vao:";
 	cin >> f.q;
 	
-	if (kk == -1) {	// cho phep nhap am de tru don hang dang nhap
-		kk = 0;
-	}else kk = temp[kk]["quantity"];
-	if ((kk + f.q) < 1) {
+	
+	if ((nHave + f.q) < 1) {
 		 cin.clear(); cin.ignore(999, '\n');
 		goto step5;
 	};
@@ -519,8 +561,7 @@ void newPkgs(json* pkg) { //NHAP HANG VOI CAC TUY CHON
 	json t=*pkg;
 	json items={};
 	string id = creIdOrder(*pkg);
-	t["packages"]["nAll"] = t["packages"]["nAll"] + 1;
-	t["packages"]["nHaving"] = t["packages"]["nHaving"] + 1;
+	t["packages"]["nImp"] = t["packages"]["nImp"] + 1;
 	
 	int n = 0;
 renew:
@@ -552,7 +593,7 @@ renew:
 	}
 	case'3': {
 		if (n>0){
-			t["packages"]["pkgs"].push_back({ {"n",n},{"id",id},{"items",items},{"time",now()} });
+			t["packages"]["pkgs"].push_back({ {"n",n},{"id",id},{"items",items},{"time",now()},{"t","imp"}});
 			*pkg = t;
 			exportJSON(*pkg);
 			cout << "Luu thanh cong!" << endl;
@@ -574,31 +615,37 @@ void editPackage0() {
 		system("cls");
 		cout << "QUAN LY DON HANG TRONG KHO!" << endl;
 		cout << "---------------------------" << endl;
-		cout << "1. Nhap DON HANG moi," << endl;
-		cout << "2. Truy xuat DON HANG nhanh," << endl;
-		cout << "3. Xem tat ca DON HANG con lai trong kho," << endl;
-		cout << "4. Xem tat ca MAU MODEL da nhap," << endl;
-		cout << "5. Tro lai." << endl;
+		cout << "1. Nhap danh sach MAU MAY duoc phep nhap," << endl;
+		cout << "2. Nhap DON HANG NHAP MAY moi," << endl;
+		cout << "3. Xuat DON HANG NHAP MAY moi," << endl;
+		cout << "4. Xem DON HANG NHAP / XUAT," << endl;
+		cout << "5. Xem tat ca MAU MODEL dang co trong kho," << endl;
+		cout << "0. Tro lai." << endl;
 		cout << "/>";
 		cin >> a;
 		switch (a)
 		{
 		case '1': {
-			newPkgs(&pkg);
+			newModels(&pkg);
 			break;
 		}
 		case '2': {
-			findIdPkgs(&pkg);
+			newPkgs(&pkg);
 			break;
 		}
 		case '3': {
-			outAllPkgs();
+			outPkgs(&pkg); 
 			break;
 		}
 		case '4': {
-			outModels();
+			findIdPkgs(&pkg);
 			break;
 		}
+		case '5': {
+			displayModels();
+			break;
+		}
+		
 		default:
 			break;
 		}
