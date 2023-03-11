@@ -6,6 +6,7 @@
 using namespace std;
 using json = nlohmann::json;
 
+
 struct newPkg
 {
 	char type;
@@ -26,11 +27,11 @@ string creIdOrder(json pkg);
 string now();
 void updateQuantity(json* t, char type, int vt, int q);
 void printModelQ(json t, char type);
-string getNameModel(string idModel, char type, json* t, long long* p, int* vt);
+string getNameModel(string idModel, json* t, long long* p, int* vt);
 //ham chua viet
-void outPkgs(json * pkg);
+void outPkgs(json * pkg,string s);
 
-void displayModels() { cout << "heloo"; };
+void displayModels();
 void findIdPkgs(json* pkg);
 
 void delAccout() {	//Muc xoa acc
@@ -44,7 +45,7 @@ void delAccout() {	//Muc xoa acc
 	cout << "XOA TAI KHOAN NHAN VIEN!" << endl;
 	cout << "---- Vui long lua chon tai khoan -----" << endl;
 	for (int i = 0; i < data["account"]["nUser"]; i++) {
-		cout << i + 1 << ". " << data["account"]["staffs"][i]["name"] << endl;
+		cout << i + 1 << ". " << data["account"]["staffs"][i]["uname"] << endl;
 	}
 	cout << "---- Nhap ngoai mien gia tri de thoat -----" << endl;
 	int n;
@@ -89,24 +90,51 @@ void pwAccout() {	//Doi mat khau
 	}
 	cout << "THAY DOI MAT KHAU NHAN VIEN!" << endl;
 	cout << "---- Vui long lua chon tai khoan -----" << endl;
+	cout << "0. " << data["account"]["admin"]["uname"] << " - " << data["account"]["admin"]["pass"] << endl;
 	for (int i = 0; i < data["account"]["nUser"]; i++) {
-		cout << i + 1 << ". " << data["account"]["staffs"][i]["name"] << " - " << data["account"]["staffs"][i]["pass"] << endl;
+		cout << i + 1 << ". " << data["account"]["staffs"][i]["uname"] << " - " << data["account"]["staffs"][i]["pass"] << endl;
 	}
 	cout << "---- Nhap ngoai mien gia tri de thoat -----" << endl;
 	int n;
 	cin >> n;
-	if (n<1 || n >> data["account"]["nUser"]) {
+	if (n<0 || n > data["account"]["nUser"]) {
 		cout << "Ngoai mien gia tri! Da huy!"<<endl;
 		cin.ignore(99999, '\n');
 		cin.clear();
 		system("pause");
+	}
+	else if (n == 0) {
+		{
+			n--;
+			system("cls");
+			cout << "THAY DOI MAT KHAU ADMIN!" << endl;
+			cout << "---- Doi mat khau -----" << endl;
+			cout << "Tai khoan da chon: " << (string)data["account"]["admin"]["uname"] << endl;
+			cout << "Mat khau cu: " << (string)data["account"]["admin"]["pass"] << endl;
+			cout << "Mat khau moi: ";
+			string s;
+			cin >> s;
+			cout << "Xac nhan doi? \nNhan \'Y\' de doi, bat ki de huy!" << endl;
+			char a;
+			cin >> a;
+			if (a == 'y' || a == 'Y') {
+				data["account"]["admin"]["pass"] = s;
+				exportJSON(data);
+				cout << "Da doi thanh cong!" << endl;
+				system("pause");
+			}
+			else {
+				cout << "Da huy!" << endl;
+				system("pause");
+			}
+		}
 	}
 	else {
 		n--;
 		system("cls");
 		cout << "THAY DOI MAT KHAU NHAN VIEN!" << endl;
 		cout << "---- Doi mat khau -----" << endl;
-		cout << "Tai khoan da chon: " << (string)data["account"]["staffs"][n]["name"] << endl;
+		cout << "Tai khoan da chon: " << (string)data["account"]["staffs"][n]["uname"] << endl;
 		cout << "Mat khau cu: " << (string)data["account"]["staffs"][n]["pass"] << endl;
 		cout << "Mat khau moi: ";
 		string s;
@@ -130,19 +158,22 @@ void pwAccout() {	//Doi mat khau
 void creAccout() {	//Tao acc
 	system("cls");
 	json data = importJSON();
-	string uName, pw;
+	string uName, pw,name;
 	bool k;
 	do {
 		k = 0;
 		cout << "TAO TAI KHOAN NHAN VIEN!" << endl;
 		cout << "----------------" << endl;
+		cout << "\tHo ten nhan vien: " ;
+		cin.ignore();
+		getline(cin, name);
 		cout << "\tUsername: ";
 		cin >> uName;
 		cout << "\tPassword: ";
 		cin >> pw;
 		//nhap username va password
 		for (int i = 0; i < data["account"]["nUser"]; i++) {
-			if (uName == (string)data["account"]["staffs"][i]["name"] || uName =="admin") {
+			if (uName == (string)data["account"]["staffs"][i]["uname"] || uName =="admin") {
 				system("cls");
 				cout << "Tai khoan da ton tai!" << endl;
 				k = 1;
@@ -153,6 +184,7 @@ void creAccout() {	//Tao acc
 	system("cls");
 	cout << "XAC THUC TAI KHOAN" << endl;
 	cout << "----------------" << endl;
+	cout << "\tHo ten nhan vien"<<name<<endl;
 	cout << "\tUsername: " << uName << endl;
 	cout << "\tPassword: " << pw << endl;
 	cout << "Nhan \'Y\' de tao, bat ki de huy: ";
@@ -160,7 +192,7 @@ void creAccout() {	//Tao acc
 	cin >> a;
 	// Xac nhan tao hay khong?
 	if (a == 'y' || a == 'Y') {
-		data["account"]["staffs"].push_back({ {"name",uName},{"pass",pw}});
+		data["account"]["staffs"].push_back({ {"uname",uName},{"name",name}, {"pass",pw}});
 		data["account"]["nUser"] = data["account"]["nUser"] + 1;
 		exportJSON(data);
 		cout << "Da luu thanh cong!" << endl;
@@ -390,7 +422,7 @@ step2:
 	getline(cin, f.idModel);
 	cin.clear();
 	f.idModel=toUP(f.idModel);
-	f.name = getNameModel(f.idModel, f.type, t,&f.price,&vt);
+	f.name = getNameModel(f.idModel, t,&f.price,&vt);
 	if ( f.name=="") {
 		system("cls");
 		cout << "Khong ton tai IdModel nay!" << endl;
@@ -556,17 +588,22 @@ step6:
 	system("pause");
 };
 
-void newPkgs(json* pkg) { //NHAP HANG VOI CAC TUY CHON
+void newPkgs(json* pkg,string ss) { //NHAP HANG VOI CAC TUY CHON
 	char a;
 	json t=*pkg;
 	json items={};
-	string id = creIdOrder(*pkg);
+	string id = creIdOrder(*pkg),from;
 	t["packages"]["nImp"] = t["packages"]["nImp"] + 1;
-	
+	cout << "NHAP DON HANG MOI: " << endl << string(30, '-') << endl;
+	cout << "Nhap ten doanh nghiep cung cap: ";
+	cin.ignore();
+	getline(cin, from);
 	int n = 0;
 renew:
 	system("cls");
-	cout << "NHAP DON HANG MOI:\nMa don hang: " << id << endl<< string(30, '-') << endl;
+	cout << "NHAP DON HANG MOI:" << endl;
+	cout << "Ten doanh nghiep cung cap: "<<from << endl;
+	cout<<"Ma don hang : " << id << endl<< string(30, '-') << endl;
 	cout << "LUA CHON NHAP DON HANG:" << endl;
 	cout << "1/ Nhap mau Mau moi" << endl;
 	cout << "2/ Mau da co," << endl;
@@ -593,12 +630,12 @@ renew:
 	}
 	case'3': {
 		if (n>0){
-			t["packages"]["pkgs"].push_back({ {"n",n},{"id",id},{"items",items},{"time",now()},{"t","imp"}});
+			t["packages"]["pkgs"].push_back({ {"n",n},{"id",id},{"items",items},{"time",now()},{"t","imp"},{"name",ss},{"from",from}});
 			*pkg = t;
 			exportJSON(*pkg);
 			cout << "Luu thanh cong!" << endl;
 			system("pause");
-		}
+		}else goto renew;
 		break;
 	}
 	default:
@@ -608,7 +645,7 @@ renew:
 
 };
 
-void editPackage0() {
+void editPackage0(string s) {
 	json pkg = importJSON();
 	char a;
 	do {
@@ -630,11 +667,11 @@ void editPackage0() {
 			break;
 		}
 		case '2': {
-			newPkgs(&pkg);
+			newPkgs(&pkg,s);
 			break;
 		}
 		case '3': {
-			outPkgs(&pkg); 
+			outPkgs(&pkg,s); 
 			break;
 		}
 		case '4': {
@@ -645,29 +682,30 @@ void editPackage0() {
 			displayModels();
 			break;
 		}
-		
 		default:
 			break;
 		}
-	} while (a!='5');
+	} while (a!='0');
 }
 
-void displayAdmin() {
+void displayAdmin(string s) {
+	
 	system("cls");
-	cout << "CHAO MUNG ADMIN!" << endl;
+	cout << "CHAO MUNG ADMIN "<<s<<"!" << endl;
 	cout << "----------------" << endl;
 	cout << "1. Quan ly tai khoan nhan vien," << endl;
 	cout << "2. Quan ly kho hang," << endl;
 	cout << "3. Xuat log nhap/xuat," << endl;
-	cout << "4. Thoat." << endl;
+	cout << "0. Thoat." << endl;
 	cout << "/>";
 }
 
 void gotoAdmin() {
-
+	json f = importJSON();
+	string s = f["account"]["admin"]["name"];
 	char a;
 	do {
-		displayAdmin();
+		displayAdmin(s);
 		cin >> a;
 		switch (a)
 		{
@@ -676,13 +714,13 @@ void gotoAdmin() {
 			break;
 		}
 		case '2': {
-			editPackage0();
+			editPackage0(s);
 			break;
 		}
 		default:
 			break;
 		}
 
-	} while (a != '4');
+	} while (a != '0');
 
 }
